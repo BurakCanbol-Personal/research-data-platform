@@ -14,12 +14,19 @@ datasets = []
 def root():
     return {"message": "Hello Burak, FastAPI is working"}
 
+# region Health routes
 
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
-##datasets
+
+# endregion
+
+
+
+# region Dataset routes
+
 @app.get("/datasets")
 def list_datasets(limit: int = 10, status: str | None = None):
     results = datasets
@@ -60,17 +67,4 @@ def create_dataset(dataset: DatasetCreate):
         "dataset": new_dataset
     }
 
-@app.get("/users/{username}")
-def get_user(username: str):
-    return {
-        "username": username,
-        "message": f"Profile page for {username}"
-    }
-
-@app.get("/search")
-def search(q: str | None = None, limit: int = 10):
-    return{
-        "query": q,
-        "limit": limit,
-        "message": f"Searching for {q} with limit {limit}"
-    }
+# endregion
