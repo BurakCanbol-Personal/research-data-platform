@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -48,9 +48,12 @@ def get_dataset(dataset_id: int):
         if dataset["id"] == dataset_id:
             return dataset
         
-    return {"error": "Dataset not found"}
+    raise HTTPException(
+        status_code=404,
+        detail="Dataset not found"
+    )
 
-@app.post("/datasets")
+@app.post("/datasets", status_code=status.HTTP_201_CREATED)
 def create_dataset(dataset: DatasetCreate):
     new_dataset = {
         "id": len(datasets) + 1,
