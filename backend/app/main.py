@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Query
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -7,6 +7,17 @@ class DatasetCreate(BaseModel):
     name: str
     description: str | None = None
     file_type: str
+
+class DatasetResponse(BaseModel):
+    id: int
+    name: str
+    description: str | None = None
+    file_type: str
+    status: str
+
+class DatasetListResponse(BaseModel):
+    count: int
+    datasets: list[DatasetResponse]
 
 datasets = []
 
@@ -27,8 +38,11 @@ def health_check():
 
 # region Dataset routes
 
-@app.get("/datasets")
-def list_datasets(limit: int = 10, status: str | None = None):
+@app.get("/datasets", response_model=DatasetListResponse)
+def list_datasets(
+    limit: int = Query(default=10, ge=1, le=100), 
+    status: str | None = None
+):
     results = datasets
 
     if status is not None:
@@ -42,7 +56,7 @@ def list_datasets(limit: int = 10, status: str | None = None):
         "datasets": results[:limit]
     }
 
-@app.get("/datasets/{dataset_id}")
+@app.get("/datasets/{dataset_id}", response_model=DatasetResponse)
 def get_dataset(dataset_id: int):
     for dataset in datasets:
         if dataset["id"] == dataset_id:
@@ -53,7 +67,10 @@ def get_dataset(dataset_id: int):
         detail="Dataset not found"
     )
 
-@app.post("/datasets", status_code=status.HTTP_201_CREATED)
+@app.post("/datasets",
+          status_code=status.HTTP_201_CREATED,
+          response_model=DatasetResponse
+)
 def create_dataset(dataset: DatasetCreate):
     new_dataset = {
         "id": len(datasets) + 1,
@@ -65,9 +82,6 @@ def create_dataset(dataset: DatasetCreate):
 
     datasets.append(new_dataset)
 
-    return{
-        "message": "Dataset created successfully",
-        "dataset": new_dataset
-    }
+    return new_dataset
 
 # endregion
