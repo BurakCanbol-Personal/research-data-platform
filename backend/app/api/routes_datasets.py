@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, File, UploadFile
 from pydantic import BaseModel
+
+from app.services.file_service import save_uploaded_file
 
 router = APIRouter(
     prefix="/datasets",
@@ -70,3 +72,24 @@ def create_dataset(dataset: DatasetCreate):
     datasets.append(new_dataset)
 
     return new_dataset
+
+
+@router.post("/upload")
+def upload_dataset(file: UploadFile = File(...)):
+
+    try:
+        save_path = save_uploaded_file(file)
+
+
+        return {
+            "message": "File uploaded successfully",
+            "original_filename": file.filename,
+            "saved_path": save_path
+        }
+    
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
