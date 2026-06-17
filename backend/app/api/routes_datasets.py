@@ -19,13 +19,34 @@ class DatasetResponse(BaseModel):
     description: str | None = None
     file_type: str
     status: str
-    save_path: str | None = None
+    saved_path: str | None = None
 
 class DatasetListResponse(BaseModel):
     count: int
     datasets: list[DatasetResponse]
 
 datasets = []
+
+def create_dataset_record(
+        name: str,
+        file_type: str,
+        description: str | None = None,
+        status: str = "created",
+        saved_path: str | None = None
+):
+    
+    new_dataset = {
+        "id": len(datasets) + 1,
+        "name": name,
+        "description": description,
+        "file_type": file_type,
+        "status": status,
+        "saved_path": saved_path 
+    }
+    
+    datasets.append(new_dataset)
+
+    return new_dataset
 
 @router.get("/", response_model=DatasetListResponse)
 def list_datasets(
@@ -62,15 +83,11 @@ def get_dataset(dataset_id: int):
         response_model=DatasetResponse
 )
 def create_dataset(dataset: DatasetCreate):
-    new_dataset = {
-        "id": len(datasets) + 1,
-        "name": dataset.name,
-        "description": dataset.description,
-        "file_type": dataset.file_type,
-        "status": "created"
-    }
-
-    datasets.append(new_dataset)
+    new_dataset = create_dataset_record(
+        name= dataset.name,
+        file_type= dataset.file_type,
+        description= dataset.description,
+    )
 
     return new_dataset
 
@@ -82,19 +99,15 @@ def create_dataset(dataset: DatasetCreate):
 def upload_dataset(file: UploadFile = File(...)):
 
     try:
-        save_path = save_uploaded_file(file)
+        saved_path = save_uploaded_file(file)
         file_type = file.filename.split(".")[-1].lower()
 
-        new_dataset = {
-            "id": len(datasets) + 1,
-            "name": file.filename,
-            "description": None,
-            "file_type": file_type,
-            "status": "uploaded",
-            "save_path": save_path 
-        }
-
-        datasets.append(new_dataset)
+        new_dataset = create_dataset_record(
+            name= file.filename,
+            file_type= file_type,
+            status= "uploaded",
+            saved_path= saved_path
+        )
 
         return new_dataset
     
