@@ -19,6 +19,7 @@ class DatasetResponse(BaseModel):
     description: str | None = None
     file_type: str
     status: str
+    save_path: str | None = None
 
 class DatasetListResponse(BaseModel):
     count: int
@@ -74,18 +75,28 @@ def create_dataset(dataset: DatasetCreate):
     return new_dataset
 
 
-@router.post("/upload")
+@router.post("/upload",
+             status_code=status.HTTP_201_CREATED,
+             response_model=DatasetResponse
+)
 def upload_dataset(file: UploadFile = File(...)):
 
     try:
         save_path = save_uploaded_file(file)
+        file_type = file.filename.split(".")[-1].lower()
 
-
-        return {
-            "message": "File uploaded successfully",
-            "original_filename": file.filename,
-            "saved_path": save_path
+        new_dataset = {
+            "id": len(datasets) + 1,
+            "name": file.filename,
+            "description": None,
+            "file_type": file_type,
+            "status": "uploaded",
+            "save_path": save_path 
         }
+
+        datasets.append(new_dataset)
+
+        return new_dataset
     
     except ValueError as error:
         raise HTTPException(
